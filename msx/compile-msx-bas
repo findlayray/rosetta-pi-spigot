@@ -1,0 +1,19 @@
+A=pi-msx-bas.
+D=msx.dsk
+pasmo6 --listing ${A}lst ${A}asm calcpi.bin || exit 1
+gawk '/@varh@/{
+printf "s/@varhlo@/%x/g\n", strtonum("0x"$1)
+printf "s/@varhhi@/%x/g\n", strtonum("0x"$1)+1
+}
+/@ti0@/{
+printf "s/@ti0@/%x/g\n", strtonum("0x"$1)
+printf "s/@ti1@/%x/g\n", strtonum("0x"$1)+1
+printf "s/@ti2@/%x/g\n", strtonum("0x"$1)+2
+}
+/@EOP@/{
+printf "s/@PMEM@/%x/\n", strtonum("0x"$3)-0x8500-64
+}' ${A}lst >z.sed
+sed -f z.sed pi.cbas | sed 's/$/\r/' >pi.bas
+sudo mount -t msdos -o loop,fmask=111,dmask=000 $D /mnt/loop
+cp calcpi.bin pi.bas /mnt/loop
+sudo umount /mnt/loop

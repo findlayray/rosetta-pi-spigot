@@ -1,0 +1,116 @@
+div0 macro         ;it is used in the main code
+     local t1,t2
+     or a
+     rl de
+     ld a,l
+     adc a,l
+     ld l,a
+     ld a,h
+     adc a,h
+     ld h,a
+     jp c,t1
+
+     LD    A,L
+     ADD   A,C
+     LD    A,H
+     ADC   A,B
+     jp nc,t2
+t1
+     ADD   HL,BC
+     inc e
+t2
+endm
+
+div1 macro
+     local t1,t2
+     ld a,l
+     adc a,a
+     ld l,a
+     ld a,h
+     adc a,a
+     ld h,a
+     jp c,t1
+
+     ld a,l
+     sub c
+     ld a,h
+     sbc a,b
+     jp c,t2
+t1
+     sub hl,bc
+t2   ccf
+endm
+
+divz macro
+    local l2
+    ex de,hl
+    ADD HL,HL
+    rl de
+    EX DE,HL
+
+    sub hl,bc
+    inc e
+    jp nc,l2
+
+    ADD HL,BC
+    dec e
+l2
+endm
+
+divx macro
+rept 16
+     divz
+endm
+endm
+
+div32x16 macro  ; BCDE = HLDE/BC, HL = HLDE%BC
+     local DIV320,divminus ;may work wrong if HL>$7fff
+     LD    A, B
+     or a         ;CF=0
+     jp m,divminus
+
+     ld a,l
+     sub c
+     ld a,h
+     sbc a,b
+     jp c,DIV320
+
+     PUSH DE    ;longdiv
+	 EX DE,HL
+	 LD HL,0
+	 divx
+	 EX DE,HL
+	 EX (SP),HL
+	 EX DE,HL
+	 divx
+	 POP BC
+     jp enddivision
+
+divminus
+rept 8
+     ld a,d
+     rla
+     ld d,a
+     div1
+endm
+     ld a,d
+     rla
+     ld d,a
+rept 8
+     ld a,e
+     rla
+     ld e,a
+     div1
+endm
+     ld a,e
+     rla
+     ld e,a
+     jp enddivision1
+
+DIV320
+     divx
+enddivision1
+     LD    BC, 0
+enddivision
+     endm
+
